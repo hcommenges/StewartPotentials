@@ -1,0 +1,16 @@
+{
+    "contents" : "\n# This function compute the potentials of spatial interaction as defined by J.Q. Stewart\n\n\n\n# load packages ----\n\nlibrary(sp)\nlibrary(rgdal)\nlibrary(rgeos)\nlibrary(raster)\nlibrary(fields)\nlibrary(RColorBrewer)\n\n\n# load data ----\n\nspatPts <- readOGR(dsn = \"parispc_pts.shp\", layer = \"parispc_pts\", stringsAsFactors = FALSE)\nspatUnits <- readOGR(dsn = \"parispc_com.shp\", layer = \"parispc_com\", stringsAsFactors = FALSE)\nspatMask <- readOGR(dsn = \"parispc_mask.shp\", layer = \"parispc_mask\", stringsAsFactors = FALSE)\n\nplot(spatMask)\nplot(spatUnits)\nplot(spatPts, add = T)\n\n\nopportunities <- PointsOpport(knownpts = spatPts, varname = \"POPULATION\",\n                           span = 1500, beta = 2, mask = spatMask, resolution = 400)\n\npotentials <- OpportPotentials(opportgrid = opportunities, nbclass = 8, mask = spatMask)\n\nplot(potentials, col = plyr::mapvalues(potentials$layer, \n                                       from = potentials$layer, \n                                       to = brewer.pal(n = 8, name = \"Reds\")))\n\nlibrary(spgrass6)\ninitGRASS(gisBase = \"/usr/lib/grass64\", home = getwd(), override = TRUE)\nwriteVECT6(SDF = potentials, vname = \"popol\", v.in.ogr_flags = c(\"o\", \"overwrite\"))\nexecGRASS(\"v.generalize\", flags = c(\"overwrite\"), input = \"popol\", output = \"polySimple\", threshold = 1, method = \"snakes\", alpha = 1, beta = 1)\nvivi <- readVECT6(vname = \"polySimple\")\n\nplot(vivi, col = plyr::mapvalues(vivi$cat, \n                                 from = vivi$cat, \n                                 to = brewer.pal(n = 8, name = \"Reds\")))\n\n\n\n\n\n",
+    "created" : 1421938237625.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1346749969",
+    "id" : "1061FD43",
+    "lastKnownWriteTime" : 1421945939,
+    "path" : "~/Repositories/StewartPotentials/Potentials_fct.R",
+    "project_path" : "Potentials_fct.R",
+    "properties" : {
+    },
+    "source_on_save" : false,
+    "type" : "r_source"
+}
