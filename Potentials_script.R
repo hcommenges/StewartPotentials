@@ -10,7 +10,8 @@
 #' @param mask, object of class sp (SpatialPolygonsDataFrame) to clip the final map of potentials.
 #' @param opportgrid, output of the PointOpport() function. This object is a list containing a grid of unknown points, 
 #' a matrix of opportunities and a projection.
-#' @param varname CHARACTER, name of the variable (in the attribute table) from which potentials are computed.
+#' @param varname CHARACTER, name of the variable (in the attribute table) from which potentials are computed. 
+#' Quantitative variable with no negative values.
 #' @param typedist CHARACTER, type of distance. Options are "euclidean" (default) or "orthodromic". 
 #' If the distance is euclidean, X and Y coordinates are expected. If orthodromic longitud and latitud are expected 
 #' in decimal degrees, in WGS84 reference system.)
@@ -56,9 +57,9 @@ plot(spatPts, add = T)
 opportunities <- PointsOpport(knownpts = spatPts, 
                               varname = "POPULATION",
                               span = 1500, 
-                              beta = 2, 
+                              beta = 3, 
                               mask = spatMask, 
-                              resolution = 400)
+                              resolution = 200)
 
 
 # compute potentials ----

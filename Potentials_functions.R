@@ -10,7 +10,7 @@ PointsOpport <- function(knownpts,
                          varname,
                          span,
                          beta,
-                         mask = FALSE, 
+                         mask = NULL, 
                          typedist = "euclidean", 
                          typefct = "exponential", 
                          resolution = 200)
@@ -29,7 +29,7 @@ PointsOpport <- function(knownpts,
   return(list(UNKWPTS = unknownpts, OPPORT = matopport, PROJ = getproj))
 }
 
-OpportPotentials <- function(opportgrid, nbclass = 8, mask = FALSE)
+OpportPotentials <- function(opportgrid, nbclass = 8, mask = NULL)
 {
   polyPot <- ComputePotentials(unknownpts = opportgrid$UNKWPTS, 
                                matopport = opportgrid$OPPORT, 
@@ -58,7 +58,7 @@ CreateGrid <- function (knownpts, mask, resolution)
                       round((max(coordPts[ , "COORDX"]) - min(coordPts[ , "COORDX"])) / resolution, digits = 4),
                       round((max(coordPts[ , "COORDY"]) - min(coordPts[ , "COORDY"])) / resolution, digits = 4))
   
-  if(is.null(dim(mask))){
+  if(is.null(mask)){
     boundingBox <- bbox(knownpts)
   } else {
     boundingBox <- bbox(mask)
@@ -153,7 +153,7 @@ ComputePotentials <- function(unknownpts, matopport, nbclass, mask, myproj)
   
   rastFilled <- rasterize(spatUnknownPts, rastGrid, field = "POTDISCRET")
   
-  if(!is.null(dim(mask))){
+  if(!is.null(mask)){
     rastFilled <- mask(rastFilled, mask = mask)
   }
   
