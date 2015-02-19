@@ -49,17 +49,17 @@ spatMask <- readOGR(dsn = "DATA/parispc_mask.shp", layer = "parispc_mask", strin
 
 plot(spatMask)
 plot(spatUnits)
-plot(spatPts, add = T)
-
+plot(spatPts, pch = 20, add = T)
+spatPts$POPULATION
 
 # compute opportunities ----
 
 opportunities <- PointsOpport(knownpts = spatPts, 
                               varname = "POPULATION",
-                              span = 1500, 
-                              beta = 3, 
+                              span = 1000, 
+                              beta = 2, 
                               mask = spatMask, 
-                              resolution = 200)
+                              resolution = 400)
 
 
 # compute potentials ----
@@ -76,19 +76,21 @@ plot(potentials, col = plyr::mapvalues(potentials$layer,
                                        to = brewer.pal(n = 8, name = "Reds")))
 
 
-# generalize polygons geometry ----
+# compute Reilly catchment zones ----
 
-library(spgrass6)
-initGRASS(gisBase = "/usr/lib/grass64", home = getwd(), override = TRUE)
-writeVECT6(SDF = potentials, vname = "inpol", v.in.ogr_flags = c("o", "overwrite"))
-execGRASS("v.generalize", flags = c("overwrite"), input = "inpol", output = "outpol", threshold = 1, method = "snakes", alpha = 1, beta = 1)
-genPol <- readVECT6(vname = "outpol")
+reillyRast <- ComputeReilly(unknownpts = opportunities$UNKWPTS, 
+                            matopport = opportunities$OPPORT, 
+                            mask = spatMask, 
+                            myproj = opportunities$PROJ)
 
-plot(genPol, col = plyr::mapvalues(genPol$cat, 
-                                   from = genPol$cat, 
-                                   to = brewer.pal(n = 8, name = "Reds")))
+plot(reillyRast)
 
+# compute Huff catchment zones ----
 
+huffRast <- ComputeHuff(unknownpts = opportunities$UNKWPTS, 
+                        matopport = opportunities$OPPORT, 
+                        mask = spatMask, 
+                        myproj = opportunities$PROJ)
 
-
+plot(huffRast)
 

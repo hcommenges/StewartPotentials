@@ -108,7 +108,7 @@ ComputeInteractDensity <- function(matdist, unknownpts, typefct, beta, span)
   }
   
   diag(matDens) <- 1
-  matDens <- round(matDens, digits = 8)
+  matDens <- round(matDens, digits = 16)
   unknownpts$MAXDENSITY <- apply(matDens, 2, max, na.rm = TRUE)
   
   return(list(PTS = unknownpts, MAT = matDens))
@@ -120,7 +120,7 @@ ComputeInteractDensity <- function(matdist, unknownpts, typefct, beta, span)
 ComputeOpportunity <- function(knownpts, matdens, varname = varname)
 {
   matOpport <- knownpts@data[, varname] * matdens
-  return(round(matOpport, digits = 8))
+  return(round(matOpport, digits = 16))
 }
 
 
@@ -163,4 +163,74 @@ ComputePotentials <- function(unknownpts, matopport, nbclass, mask, myproj)
 
 
 
+# Compute Reilly catchment zones ----
+
+ComputeReilly <- function(unknownpts, matopport, mask, myproj)
+{
+  # compute Reilly catchment zones
+  unknownpts$REILLY <- apply(matopport, 2, which.max)
+  
+  spatUnknownPts <- SpatialPointsDataFrame(coords = unknownpts[ , c(2, 3)], 
+                                           data = unknownpts, 
+                                           proj4string = CRS(myproj))
+  # build raster
+  rastGrid <- raster(xmn = min(unknownpts$COORDX), 
+                     xmx = max(unknownpts$COORDX),
+                     ymn = min(unknownpts$COORDY),
+                     ymx = max(unknownpts$COORDY),
+                     nrows = length(unique(unknownpts$COORDY)),
+                     ncols = length(unique(unknownpts$COORDX)),
+                     crs = CRS(myproj))
+  
+  rastFilled <- rasterize(spatUnknownPts, rastGrid, field = "REILLY")
+  
+  if(!is.null(mask)){
+    rastFilled <- mask(rastFilled, mask = mask)
+  }
+
+  return(rastFilled)
+}
+
+
+
+# Compute Huff catchment zones ----
+
+ComputeHuff <- function(unknownpts, matopport, mask, myproj)
+{
+  # compute Reilly catchment zones
+  sumCol <- colSums(x = matopport, na.rm = TRUE)
+  matOpportPct <- 100 * t(t(matopport) / sumCol)
+  unknownpts$HUFF <- apply(matOpportPct, 2, max, na.rm = TRUE)
+  unknownpts$HUFF[is.na(unknownpts$HUFF) | is.infinite(unknownpts$HUFF)] <- 0
+  
+  # discretize values
+  brksVal <- seq(0, 100, 10)
+  unknownpts$HUFFDISCRET <- as.integer(cut(unknownpts$HUFF, 
+                                          breaks = brksVal,
+                                          labels = seq(1, 10, 1), 
+                                          right = FALSE, 
+                                          include.lowest = TRUE))
+  
+  
+  # build raster
+  spatUnknownPts <- SpatialPointsDataFrame(coords = unknownpts[ , c(2, 3)], 
+                                           data = unknownpts, 
+                                           proj4string = CRS(myproj))
+  
+  rastGrid <- raster(xmn = min(unknownpts$COORDX), 
+                     xmx = max(unknownpts$COORDX),
+                     ymn = min(unknownpts$COORDY),
+                     ymx = max(unknownpts$COORDY),
+                     nrows = length(unique(unknownpts$COORDY)),
+                     ncols = length(unique(unknownpts$COORDX)),
+                     crs = CRS(myproj))
+  
+  rastFilled <- rasterize(spatUnknownPts, rastGrid, field = "HUFFDISCRET")
+  
+  if(!is.null(mask)){
+    rastFilled <- mask(rastFilled, mask = mask)
+  }
+
+  return(rastFilled)
+}
 
